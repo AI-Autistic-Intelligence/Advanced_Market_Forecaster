@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader, TensorDataset
 import numpy as np
 
 from src.data.data_pipeline import generate_synthetic_data, preprocess_data, create_sequences
-from src.models.architecture import LSTMMarketPredictor
+from src.core_models.lstm import LSTMMarketPredictor
 
 def train_model(
     data_path: str = "data/market_data.csv",

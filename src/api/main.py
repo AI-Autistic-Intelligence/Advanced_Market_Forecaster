@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from typing import List
 from prometheus_fastapi_instrumentator import Instrumentator
 
-from src.models.architecture import LSTMMarketPredictor
+from src.core_models.lstm import LSTMMarketPredictor
 from src.api.config import settings
 
 logger = structlog.get_logger()

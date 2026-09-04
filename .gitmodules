@@ -4,3 +4,9 @@
 [submodule "docs_theme"]
 	path = docs_theme
 	url = https://github.com/Nek97/Docusaurus_Autistic_Theme.git
+[submodule "src/core_models"]
+	path = src/core_models
+	url = ../mlops_core_models
+[submodule "src/core_ingestion"]
+	path = src/core_ingestion
+	url = ../mlops_core_ingestion

@@ -1,5 +1,5 @@
 import torch
-from src.models.architecture import LSTMMarketPredictor
+from src.core_models.lstm import LSTMMarketPredictor
 
 def test_model_forward_pass():
     # Model configuration
