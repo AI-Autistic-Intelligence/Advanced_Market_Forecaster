@@ -2,15 +2,17 @@
 
 An End-to-End MLOps project demonstrating a production-ready Machine Learning pipeline for Time-Series forecasting. 
 
-This project aims to simulate a realistic Senior ML Engineer workflow by covering data generation, deep learning model architecture, model training, API serving, containerization, and automated testing.
+This project simulates a realistic Senior ML Engineer workflow by covering data generation, deep learning model architecture, model training, API serving, containerization, and interactive visualization.
 
 ## 🚀 Features
 
 - **Synthetic Market Data Generator**: Generates simulated financial time-series data to train the model without relying on external APIs.
 - **Deep Learning Model**: A PyTorch-based Long Short-Term Memory (LSTM) network designed for sequence prediction.
-- **FastAPI Serving Layer**: A high-performance REST API for serving model predictions.
+- **Robust API Serving**: A high-performance FastAPI server utilizing `gunicorn`, `joblib` for secure serialization, and `pydantic-settings` for external configuration.
+- **Prometheus Metrics**: Automatic `/metrics` endpoint exposed via `prometheus-fastapi-instrumentator`.
+- **Streamlit Dashboard**: A fully interactive web application with Manual, Step-by-Step, and Auto modes for real-time inference and truth verification against historical data.
 - **Comprehensive Testing**: Pytest suite for both model correctness and API endpoints.
-- **Dockerized**: Easy deployment using Docker and Docker Compose.
+- **Production-Ready Docker**: Multi-stage, non-root Docker builds for security and efficiency.
 
 ## 📂 Project Structure
 
@@ -23,23 +25,48 @@ Advanced_Market_Forecaster/
 │   ├── models/
 │   │   ├── architecture.py      # PyTorch model definitions
 │   │   └── train.py             # Training loop
-│   └── api/
-│       └── main.py              # FastAPI server
+│   ├── api/
+│   │   ├── main.py              # FastAPI server
+│   │   └── config.py            # Pydantic environment configurations
+│   └── dashboard/
+│       └── app.py               # Streamlit interactive UI
 │
 ├── tests/
 │   ├── test_model.py            # Unit tests for PyTorch models
 │   └── test_api.py              # Integration tests for FastAPI
 │
-├── data/                        # Generated datasets (ignored in git)
-├── models/                      # Serialized model weights (ignored in git)
+├── docs_theme/                  # Docusaurus documentation submodule
+├── data/                        # Generated datasets (git ignored)
+├── models/                      # Serialized model weights (git ignored)
 ├── requirements.txt             # Python dependencies
-├── Dockerfile                   # Docker image definition
-└── docker-compose.yml           # Compose configuration
+├── Dockerfile                   # Docker image definition (Multi-stage)
+├── .dockerignore                # Docker exclusion rules
+└── docker-compose.yml           # Compose configuration for API and Dashboard
 ```
 
 ## 🛠️ Setup & Installation
 
-### Option 1: Local Python Environment
+### Option 1: Docker (Recommended)
+
+Make sure you have Docker and Docker Compose installed.
+
+1. Generate the initial training data and model artifacts locally first (requires Python environment):
+   ```bash
+   pip install -r requirements.txt
+   python -m src.models.train
+   ```
+
+2. Start the API and Dashboard services:
+   ```bash
+   docker-compose up --build
+   ```
+
+3. Access the services:
+   - **Dashboard**: `http://localhost:8501`
+   - **API Swagger UI**: `http://localhost:8000/docs`
+   - **Prometheus Metrics**: `http://localhost:8000/metrics`
+
+### Option 2: Local Python Environment
 
 1. Create a virtual environment:
    ```bash
@@ -50,35 +77,35 @@ Advanced_Market_Forecaster/
    ```bash
    pip install -r requirements.txt
    ```
+3. Run the pipeline:
+   ```bash
+   python -m src.data.data_pipeline
+   python -m src.models.train
+   ```
+4. Start the API:
+   ```bash
+   python -m uvicorn src.api.main:app --port 8000
+   ```
+5. Start the Dashboard (in a new terminal):
+   ```bash
+   python -m streamlit run src.dashboard.app.py --server.port 8501
+   ```
 
-### Option 2: Docker
+## 📚 Documentation
 
-Make sure you have Docker installed.
+Detailed architectural and technical documentation is maintained within the `docs_theme` directory, which is configured as a [Docusaurus](https://docusaurus.io/) git submodule.
+
+To initialize and view the documentation locally:
+
 ```bash
-docker-compose up --build
+# Initialize the submodule if you haven't already
+git submodule update --init
+
+cd docs_theme
+npm install
+npm run start
 ```
-
-## 🏃‍♂️ Running the Pipeline
-
-If running locally (Option 1):
-
-**1. Generate Data:**
-```bash
-python -m src.data.data_pipeline
-```
-This will create `data/market_data.csv` and a scaler artifact.
-
-**2. Train the Model:**
-```bash
-python -m src.models.train
-```
-This will train the LSTM and save weights to `models/best_model.pt`.
-
-**3. Run the API:**
-```bash
-uvicorn src.api.main:app --host 0.0.0.0 --port 8000
-```
-Access the Swagger UI at `http://localhost:8000/docs`.
+*Note: Ensure you have Node.js installed to run Docusaurus.*
 
 ## 🧪 Testing
 

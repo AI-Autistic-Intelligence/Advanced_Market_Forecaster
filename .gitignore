@@ -1,0 +1,12 @@
+.pytest_cache/
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+/data/
+/models/
+docs_theme/node_modules/
+docs_theme/build/
+docs_theme/.docusaurus/
