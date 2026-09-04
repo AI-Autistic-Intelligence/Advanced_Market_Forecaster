@@ -1,0 +1,6 @@
+[submodule "external/Market_Simulator_Engine"]
+	path = external/Market_Simulator_Engine
+	url = https://github.com/Nek97/Market_Simulator_Engine.git
+[submodule "docs_theme"]
+	path = docs_theme
+	url = https://github.com/Nek97/Docusaurus_Autistic_Theme.git
