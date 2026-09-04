@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
-import pickle
+import joblib
 from sklearn.preprocessing import MinMaxScaler
 from typing import Tuple
 
@@ -14,7 +14,7 @@ def generate_synthetic_data(num_samples: int = 5000, save_path: str = "data/mark
     np.random.seed(42)
     
     # Time index
-    dates = pd.date_range(start="2020-01-01", periods=num_samples, freq="1H")
+    dates = pd.date_range(start="2020-01-01", periods=num_samples, freq="h")
     
     # Generate prices using geometric brownian motion-like process
     returns = np.random.normal(loc=0.0001, scale=0.01, size=num_samples)
@@ -44,7 +44,7 @@ def generate_synthetic_data(num_samples: int = 5000, save_path: str = "data/mark
     return df
 
 def preprocess_data(csv_path: str = "data/market_data.csv", 
-                    scaler_path: str = "models/scaler.pkl") -> Tuple[pd.DataFrame, MinMaxScaler]:
+                    scaler_path: str = "models/scaler.joblib") -> Tuple[pd.DataFrame, MinMaxScaler]:
     """
     Load data, scale it, and save the scaler for inference.
     """
@@ -55,8 +55,7 @@ def preprocess_data(csv_path: str = "data/market_data.csv",
     df_scaled = pd.DataFrame(scaled_data, columns=df.columns, index=df.index)
     
     os.makedirs(os.path.dirname(scaler_path), exist_ok=True)
-    with open(scaler_path, "wb") as f:
-        pickle.dump(scaler, f)
+    joblib.dump(scaler, scaler_path)
     
     print(f"Data scaled. Scaler saved to {scaler_path}")
     return df_scaled, scaler

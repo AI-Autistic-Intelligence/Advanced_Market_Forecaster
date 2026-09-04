@@ -21,7 +21,7 @@ def train_model(
     if not os.path.exists(data_path):
         generate_synthetic_data(num_samples=5000, save_path=data_path)
         
-    df_scaled, _ = preprocess_data(data_path, "models/scaler.pkl")
+    df_scaled, _ = preprocess_data(data_path, "models/scaler.joblib")
     
     X, y = create_sequences(df_scaled.values, seq_length)
     

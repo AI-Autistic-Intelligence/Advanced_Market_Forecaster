@@ -1,16 +1,23 @@
 import os
-import pickle
+import joblib
 import torch
 import numpy as np
+import structlog
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from src.models.architecture import LSTMMarketPredictor
+from src.api.config import settings
+
+logger = structlog.get_logger()
 
 app = FastAPI(title="Advanced Market Forecaster API", 
               description="Serving a PyTorch LSTM model for time-series forecasting",
               version="1.0.0")
+
+Instrumentator().instrument(app).expose(app)
 
 # Global variables to hold model and scaler
 model = None
@@ -28,22 +35,22 @@ class PredictionResponse(BaseModel):
 def load_assets():
     global model, scaler, device
     
-    scaler_path = "models/scaler.pkl"
-    model_path = "models/best_model.pt"
+    logger.info("Starting up API, loading assets...")
     
-    if os.path.exists(scaler_path):
-        with open(scaler_path, "rb") as f:
-            scaler = pickle.load(f)
+    if os.path.exists(settings.scaler_path):
+        scaler = joblib.load(settings.scaler_path)
+        logger.info(f"Scaler loaded from {settings.scaler_path}")
     else:
-        print(f"Warning: Scaler not found at {scaler_path}. Inference may fail.")
+        logger.warning(f"Scaler not found at {settings.scaler_path}. Inference may fail.")
         
-    if os.path.exists(model_path):
+    if os.path.exists(settings.model_path):
         model = LSTMMarketPredictor(input_dim=2)
-        model.load_state_dict(torch.load(model_path, map_location=device))
+        model.load_state_dict(torch.load(settings.model_path, map_location=device))
         model.eval()
         model.to(device)
+        logger.info(f"Model loaded from {settings.model_path}")
     else:
-        print(f"Warning: Model weights not found at {model_path}. Please train the model first.")
+        logger.warning(f"Model weights not found at {settings.model_path}. Please train the model first.")
 
 @app.get("/health")
 def health_check():
@@ -52,11 +59,13 @@ def health_check():
 @app.post("/predict", response_model=PredictionResponse)
 def predict(request: PredictionRequest):
     if model is None or scaler is None:
+        logger.error("Predict called but Model or Scaler not loaded.")
         raise HTTPException(status_code=503, detail="Model or Scaler not loaded.")
     
     seq = np.array(request.sequence)
-    if seq.shape != (24, 2):
-        raise HTTPException(status_code=400, detail=f"Expected sequence of shape (24, 2), got {seq.shape}")
+    if seq.shape != (settings.seq_length, 2):
+        logger.warning(f"Invalid sequence shape: expected ({settings.seq_length}, 2), got {seq.shape}")
+        raise HTTPException(status_code=400, detail=f"Expected sequence of shape ({settings.seq_length}, 2), got {seq.shape}")
     
     try:
         # Scale input
@@ -76,7 +85,9 @@ def predict(request: PredictionRequest):
         dummy[0, 0] = pred_val
         inv_pred = scaler.inverse_transform(dummy)[0, 0]
         
+        logger.info("Prediction successful", predicted_close=float(inv_pred))
         return PredictionResponse(predicted_close=float(inv_pred))
         
     except Exception as e:
+        logger.error(f"Prediction failed: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
