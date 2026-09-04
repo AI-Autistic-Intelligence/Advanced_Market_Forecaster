@@ -1,18 +1,28 @@
-# Use official Python runtime as a parent image
-FROM python:3.10-slim
+# Build stage
+FROM python:3.10-slim AS builder
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --user --no-cache-dir -r requirements.txt
 
-# Set working directory
+# Final stage
+FROM python:3.10-slim
 WORKDIR /app
 
-# Install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Create non-root user
+RUN useradd -m appuser
 
-# Copy the current directory contents into the container
-COPY . .
+# Copy installed dependencies
+COPY --from=builder /root/.local /home/appuser/.local
+ENV PATH=/home/appuser/.local/bin:$PATH
 
-# Expose port 8000 for the FastAPI app
+# Copy application code
+COPY src /app/src
+
+# Create mount points for data and models and set ownership
+RUN mkdir -p /app/data /app/models && chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
+
 EXPOSE 8000
-
-# Command to run the application
-CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["gunicorn", "src.api.main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:8000"]

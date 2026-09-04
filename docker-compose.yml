@@ -10,3 +10,19 @@ services:
       - ./models:/app/models
     environment:
       - PYTHONUNBUFFERED=1
+      - MODEL_PATH=/app/models/best_model.pt
+      - SCALER_PATH=/app/models/scaler.joblib
+      - LOG_LEVEL=INFO
+
+  dashboard:
+    build: .
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data
+      - ./src:/app/src
+    environment:
+      - API_URL=http://api:8000
+    command: ["streamlit", "run", "src/dashboard/app.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
+    depends_on:
+      - api

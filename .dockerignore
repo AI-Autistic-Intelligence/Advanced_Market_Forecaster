@@ -1,0 +1,12 @@
+.git
+.gitmodules
+.pytest_cache
+__pycache__
+*.pyc
+tests
+venv
+env
+.env
+data/
+models/
+docs_theme/
